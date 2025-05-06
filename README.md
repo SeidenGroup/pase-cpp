@@ -9,6 +9,17 @@ libraries from PASE safer and easier, with no boilerplate. It includes:
 
 Currently, C++14 w/ GCC 6 is targetted.
 
+## Examples
+
+Some example programs are provided for how to use the wrappers and to test
+their functionality.
+
+* `examples/convpath`: Calls the `Qp0lCvtPathToQSYSObjName` ILE function to
+  convert IFS `/QSYS.LIB` paths to traditional notation.
+* `examples/sysval`: Calls the `QWCRSVAL` program to get system values.
+
+`make examples` will build these in `examples/`.
+
 ## Usage
 
 ### `ebcdic.hxx`

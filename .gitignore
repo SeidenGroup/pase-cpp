@@ -1,0 +1,6 @@
+*.o
+*.a
+*.tar.gz
+examples/convpath
+examples/sysval
+core
