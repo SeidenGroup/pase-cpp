@@ -1,3 +1,5 @@
+#include <cstddef>
+
 /*
  * Copyright (c) 2025 Seiden Group
  *
