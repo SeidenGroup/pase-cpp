@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <cstring>
 
 extern "C" {
 	#include </QOpenSys/usr/include/iconv.h>
