@@ -39,7 +39,7 @@ public:
 	}
 private:
 	constexpr int process_flags(int flags) {
-		if (sizeof...(TArgs) > 255) {
+		if (sizeof...(TArgs) > PGMCALL_MAXARGS) {
 			flags |= PGMCALL_NOMAXARGS;
 		}
 		// XXX: PGMCALL_DIRECT_ARGS requires different argv type
