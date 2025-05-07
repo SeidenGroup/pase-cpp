@@ -88,9 +88,9 @@ template<typename T>
 class ILEArgument<T*> {
 public:
 	static constexpr size_t align() {
-		// Hardcode 16 in case we're using older IBM i headers
+		// Use sizeof in case we're using older IBM i headers
 		// without the correct alignment attributes for GCC.
-		return 16;
+		return sizeof(ILEpointer);
 	}
 
 	static constexpr arg_type_t type() {
