@@ -65,7 +65,7 @@ int main(int argc, char **argv)
 	to_37 = iconv_open(ccsidtocs(37), ccsidtocs(Qp2paseCCSID()));
 	from_37 = iconv_open(ccsidtocs(Qp2paseCCSID()), ccsidtocs(37));
 
-	if (argc < 1) {
+	if (argc < 2) {
 		return 1;
 	}
 
