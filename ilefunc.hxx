@@ -13,6 +13,7 @@ extern "C" {
 #include <cstdlib>
 #include <string>
 #include <stdexcept>
+#include <type_traits>
 
 /*
  * Type-safe compile-time wrapper for IBM i ILE service programs. ILE passes
@@ -22,21 +23,6 @@ extern "C" {
  *
  * Thanks to Saagar Jha for help with the building the arglist.
  */
-
-// This isn't part of ILEArgument because void specialization breaking write()
-template<typename T> constexpr result_type_t ResultReturnType() {
-	return sizeof(T);
-};
-template<>constexpr result_type_t ResultReturnType<void>(){return RESULT_VOID;}
-template<>constexpr result_type_t ResultReturnType<int8_t>(){return RESULT_INT8;}
-template<>constexpr result_type_t ResultReturnType<uint8_t>(){return RESULT_UINT8;}
-template<>constexpr result_type_t ResultReturnType<int16_t>(){return RESULT_INT16;}
-template<>constexpr result_type_t ResultReturnType<uint16_t>(){return RESULT_UINT16;}
-template<>constexpr result_type_t ResultReturnType<int32_t>(){return RESULT_INT32;}
-template<>constexpr result_type_t ResultReturnType<uint32_t>(){return RESULT_UINT32;}
-template<>constexpr result_type_t ResultReturnType<int64_t>(){return RESULT_INT64;}
-template<>constexpr result_type_t ResultReturnType<uint64_t>(){return RESULT_UINT64;}
-template<>constexpr result_type_t ResultReturnType<double>(){return RESULT_FLOAT64;}
 
 // XXX: Handle aggregate case
 template<typename T> T BaseReturn(ILEarglist_base *base);
@@ -65,13 +51,30 @@ public:
 		return sizeof(T);
 	}
 
+	static constexpr result_type_t result_type() {
+		return sizeof(T);
+	}
+
 	// This is an overload on ILEArgument instead of in ILEArglist to
 	// work around an issue with GCC pre-10 confusing T and T*.
-	static inline void write(char *dst, T src) {
+	// Do not provide for void, which is for returns only.
+	template <typename TInner = T, typename = typename std::enable_if_t<false == std::is_void<TInner>::value>>
+	static inline void write(char *dst, TInner src) {
 		// XXX: Should this be with tags?
                 memcpy(dst, &src, sizeof(src));
         }
 };
+
+template<>constexpr result_type_t ILEArgument<void>::result_type(){return RESULT_VOID;}
+template<>constexpr result_type_t ILEArgument<int8_t>::result_type(){return RESULT_INT8;}
+template<>constexpr result_type_t ILEArgument<uint8_t>::result_type(){return RESULT_UINT8;}
+template<>constexpr result_type_t ILEArgument<int16_t>::result_type(){return RESULT_INT16;}
+template<>constexpr result_type_t ILEArgument<uint16_t>::result_type(){return RESULT_UINT16;}
+template<>constexpr result_type_t ILEArgument<int32_t>::result_type(){return RESULT_INT32;}
+template<>constexpr result_type_t ILEArgument<uint32_t>::result_type(){return RESULT_UINT32;}
+template<>constexpr result_type_t ILEArgument<int64_t>::result_type(){return RESULT_INT64;}
+template<>constexpr result_type_t ILEArgument<uint64_t>::result_type(){return RESULT_UINT64;}
+template<>constexpr result_type_t ILEArgument<double>::result_type(){return RESULT_FLOAT64;}
 
 template<>constexpr arg_type_t ILEArgument<int8_t>::type(){return ARG_INT8;}
 template<>constexpr arg_type_t ILEArgument<uint8_t>::type(){return ARG_UINT8;}
@@ -199,7 +202,7 @@ public:
 		this->init();
 		// can just be ILEArglist(args...) in C++17
 		auto arguments = ILEArglist<TArgs...>(args...);
-		int rc = _ILECALLX(&this->procedure, &arguments.base, this->signature.data(), ResultReturnType<TReturn>(), this->flags);
+		int rc = _ILECALLX(&this->procedure, &arguments.base, this->signature.data(), ILEArgument<TReturn>::result_type(), this->flags);
 		// 0 is OK, -1 w/ errno 3474 is an MI exception, positive is _ILECALL error
 		// These shouldn't happen with our wrapper around it.
 		if (rc == ILECALL_INVALID_ARG) {
