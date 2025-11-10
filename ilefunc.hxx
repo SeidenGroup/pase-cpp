@@ -177,33 +177,31 @@ public:
 		};
 	}
 
-	bool init() {
+	void init() {
 		// Forking will destroy the activation mark
 		pid_t current_pid = getpid();
 		bool pid_matches = this->my_pid == current_pid;
 		if (pid_matches) {
-			return true;
+			return;
 		}
 		this->activation_mark = _ILELOADX(this->path.c_str(), ILELOAD_LIBOBJ);
-		// XXX: Should distinguish failure types
 		if (this->activation_mark == (ActivationMark)-1) {
-			return false;
+			throw std::invalid_argument("invalid service program");
 		}
 		if (_ILESYMX(&this->procedure, this->activation_mark, this->symbol.c_str()) != ILESYM_PROCEDURE) {
-			return false;
+			throw std::invalid_argument("invalid symbol");
 		}
 		this->my_pid = current_pid;
-		return true;
 	}
 
 	TReturn operator()(TArgs... args) {
-		// XXX: Throw?
+		// Lazy initialization (and reinit), throws
 		this->init();
 		// can just be ILEArglist(args...) in C++17
 		auto arguments = ILEArglist<TArgs...>(args...);
 		int rc = _ILECALLX(&this->procedure, &arguments.base, this->signature.data(), ResultReturnType<TReturn>(), this->flags);
 		// 0 is OK, -1 w/ errno 3474 is an MI exception, positive is _ILECALL error
-		// Throwing is OK because these shouldn't happen.
+		// These shouldn't happen with our wrapper around it.
 		if (rc == ILECALL_INVALID_ARG) {
 			throw std::invalid_argument("invalid signature");
 		} else if (rc == ILECALL_INVALID_RESULT) {
