@@ -12,6 +12,7 @@ extern "C" {
 #include <array>
 #include <cstdlib>
 #include <string>
+#include <stdexcept>
 
 /*
  * Type-safe compile-time wrapper for IBM i ILE service programs. ILE passes
@@ -199,9 +200,14 @@ public:
 		// can just be ILEArglist(args...) in C++17
 		auto arguments = ILEArglist<TArgs...>(args...);
 		int rc = _ILECALLX(&this->procedure, &arguments.base, this->signature.data(), ResultReturnType<TReturn>(), this->flags);
-		// 0 is OK, -1 seems to be an MI exception, positive is _ILECALL error
-		if (rc > 0) {
-			abort();
+		// 0 is OK, -1 w/ errno 3474 is an MI exception, positive is _ILECALL error
+		// Throwing is OK because these shouldn't happen.
+		if (rc == ILECALL_INVALID_ARG) {
+			throw std::invalid_argument("invalid signature");
+		} else if (rc == ILECALL_INVALID_RESULT) {
+			throw std::invalid_argument("invalid result");
+		} else if (rc == ILECALL_INVALID_FLAGS) {
+			throw std::invalid_argument("invalid flags");
 		}
 		// XXX: Tagged pointers, aggregates
 		return BaseReturn<TReturn>(&arguments.base);
