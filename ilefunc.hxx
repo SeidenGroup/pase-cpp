@@ -163,6 +163,8 @@ class ILEFunction {
 	using ActivationMark = unsigned long long;
 public:
 	ILEFunction(const char *path, const char *symbol, int flags = 0) {
+		static_assert(sizeof...(TArgs) <= 400, "_ILECALL maximum arguments reached");
+
 		this->my_pid = -1;
 		this->activation_mark = -1;
 		this->procedure = {};
