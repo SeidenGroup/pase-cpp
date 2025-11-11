@@ -14,6 +14,12 @@ extern "C" {
 #include <string>
 #include <stdexcept>
 #include <type_traits>
+#if defined(__cpp_lib_logical_traits)
+template<typename... Args>using Disjunction = std::disjunction<Args...>;
+#else
+#include <experimental/type_traits> // just assume for GCC 6, no polyfill
+template<typename... Args>using Disjunction = std::experimental::disjunction<Args...>;
+#endif
 
 /*
  * Type-safe compile-time wrapper for IBM i ILE service programs. ILE passes
@@ -23,6 +29,14 @@ extern "C" {
  *
  * Thanks to Saagar Jha for help with the building the arglist.
  */
+
+/*
+ * ParameterPackContains is used for asserting ILEFunction's arglist won't
+ * contain void. (std::disjunction isn't C++14, but GCC 6, the lowest version
+ * that we support, does have it, albeit under experimental.)
+ */
+template<class What, class... Args>
+struct ParameterPackContains : Disjunction<std::is_same<What, Args>...> {};
 
 // XXX: Handle aggregate case
 template<typename T> T BaseReturn(ILEarglist_base *base);
@@ -163,11 +177,12 @@ private:
 
 template<typename TReturn, typename... TArgs>
 class ILEFunction {
+	static_assert(ParameterPackContains<void, TArgs...>::value == false, "Argument list must not contain void");
+	static_assert(sizeof...(TArgs) <= 400, "_ILECALL maximum arguments reached");
+
 	using ActivationMark = unsigned long long;
 public:
 	ILEFunction(const char *path, const char *symbol, int flags = 0) {
-		static_assert(sizeof...(TArgs) <= 400, "_ILECALL maximum arguments reached");
-
 		this->my_pid = -1;
 		this->activation_mark = -1;
 		this->procedure = {};
