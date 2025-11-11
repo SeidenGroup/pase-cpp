@@ -71,7 +71,8 @@ public:
 
 	// This is an overload on ILEArgument instead of in ILEArglist to
 	// work around an issue with GCC pre-10 confusing T and T*.
-	// Do not provide for void, which is for returns only.
+	// Do not provide for void, which is for returns only;
+	// this metthod will error on void. ILEFunction will block void.
 	template <typename TInner = T, typename = typename std::enable_if_t<false == std::is_void<TInner>::value>>
 	static inline void write(char *dst, TInner src) {
 		// XXX: Should this be with tags?
@@ -177,7 +178,7 @@ private:
 
 template<typename TReturn, typename... TArgs>
 class ILEFunction {
-	static_assert(ParameterPackContains<void, TArgs...>::value == false, "Argument list must not contain void");
+	static_assert(ParameterPackContains<void, TArgs...>::value == false, "Argument list must not contain void (use no args instead)");
 	static_assert(sizeof...(TArgs) <= 400, "_ILECALL maximum arguments reached");
 
 	using ActivationMark = unsigned long long;
