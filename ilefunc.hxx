@@ -198,8 +198,7 @@ public:
 	void init() {
 		// Forking will destroy the activation mark
 		pid_t current_pid = getpid();
-		bool pid_matches = this->my_pid == current_pid;
-		if (pid_matches) {
+		if (this->my_pid == current_pid) {
 			return;
 		}
 		this->activation_mark = _ILELOADX(this->path.c_str(), ILELOAD_LIBOBJ);
