@@ -51,6 +51,7 @@ DefineBaseReturnSubst(int32_t, s_int32.r_int32);
 DefineBaseReturnSubst(uint32_t, s_uint32.r_uint32);
 DefineBaseReturnSubst(int64_t, r_int64);
 DefineBaseReturnSubst(uint64_t, r_uint64);
+DefineBaseReturnSubst(double, r_float64);
 
 template<typename T>
 class ILEArgument {
