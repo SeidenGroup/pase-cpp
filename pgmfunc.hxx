@@ -47,6 +47,7 @@ private:
 		// XXX: PGMCALL_DIRECT_ARGS requires different argv type
 		return flags & (PGMCALL_DROP_ADOPT
 			| PGMCALL_NOINTERRUPT
+			| PGMCALL_NOMAXARGS
 			| PGMCALL_ASCII_STRINGS
 			| PGMCALL_EXCP_NOSIGNAL);
 	}
