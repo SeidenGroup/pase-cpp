@@ -8,6 +8,8 @@ extern "C" {
 	#include <as400_protos.h>
 }
 
+#include <stdexcept>
+
 /*
  * Type-safe compile-time wrapper for IBM i *PGM objects. The OPM calling
  * convention is pass-by-reference; this automatically passes value types
@@ -30,7 +32,7 @@ public:
 		this->flags = process_flags(flags);
 		// Unlike ILE handles, these survive forks
 		if (_RSLOBJ2(&this->pgm, RSLOBJ_TS_PGM, object, library)) {
-			// XXX: Throw?
+			throw std::invalid_argument("invalid program");
 		}
 	}
 	int operator ()(TArgs... args) {
