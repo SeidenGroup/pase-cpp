@@ -1,10 +1,14 @@
-#include <cstddef>
-
 /*
  * Copyright (c) 2025 Seiden Group
  *
  * SPDX-License-Identifier: ISC
  */
+
+#pragma once
+
+#include <cstddef>
+
+namespace pase_cpp {
 
 /* Conversion table generated mechanically by recode 3.7.14
    for sequence ANSI_X3.4-1968..IBM037 (reversible).  */
@@ -83,3 +87,5 @@ struct EF {
     }
     char value[Len];
 };
+
+}

@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: ISC
  */
 
+#pragma once
+
 extern "C" {
 	#include <as400_protos.h>
 	#include <unistd.h>
@@ -14,10 +16,15 @@ extern "C" {
 #include <string>
 #include <stdexcept>
 #include <type_traits>
+#if !defined(__cpp_lib_logical_traits)
+#include <experimental/type_traits> // just assume for GCC 6, no polyfill
+#endif
+
+namespace pase_cpp {
+
 #if defined(__cpp_lib_logical_traits)
 template<typename... Args>using Disjunction = std::disjunction<Args...>;
 #else
-#include <experimental/type_traits> // just assume for GCC 6, no polyfill
 template<typename... Args>using Disjunction = std::experimental::disjunction<Args...>;
 #endif
 
@@ -246,3 +253,5 @@ private:
 	std::string path, symbol;
 	std::array<arg_type_t, sizeof...(TArgs) + 1> signature;
 };
+
+}

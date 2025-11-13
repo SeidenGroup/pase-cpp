@@ -22,6 +22,9 @@ their functionality.
 
 ## Usage
 
+All of these are in the namespace `pase_cpp`. You can use `using namespace`
+to import everything (useful for the `_e` literal), or qualify the full name.
+
 ### `ebcdic.hxx`
 
 A user-defined literal for EBCDIC characters is defined; this is useful for

@@ -10,6 +10,8 @@ extern "C" {
 #include "ebcdic.hxx"
 #include "pgmfunc.hxx"
 
+using namespace pase_cpp;
+
 typedef struct Qus_EC {
 	int  Bytes_Provided;
 	int  Bytes_Available;
