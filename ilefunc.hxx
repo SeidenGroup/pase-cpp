@@ -52,6 +52,7 @@ DefineBaseReturnSubst(uint32_t, s_uint32.r_uint32);
 DefineBaseReturnSubst(int64_t, r_int64);
 DefineBaseReturnSubst(uint64_t, r_uint64);
 DefineBaseReturnSubst(double, r_float64);
+#undef DefineBaseReturnSubst
 
 template<typename T>
 class ILEArgument {
@@ -81,28 +82,34 @@ public:
         }
 };
 
-template<>constexpr result_type_t ILEArgument<void>::result_type(){return RESULT_VOID;}
-template<>constexpr result_type_t ILEArgument<int8_t>::result_type(){return RESULT_INT8;}
-template<>constexpr result_type_t ILEArgument<uint8_t>::result_type(){return RESULT_UINT8;}
-template<>constexpr result_type_t ILEArgument<int16_t>::result_type(){return RESULT_INT16;}
-template<>constexpr result_type_t ILEArgument<uint16_t>::result_type(){return RESULT_UINT16;}
-template<>constexpr result_type_t ILEArgument<int32_t>::result_type(){return RESULT_INT32;}
-template<>constexpr result_type_t ILEArgument<uint32_t>::result_type(){return RESULT_UINT32;}
-template<>constexpr result_type_t ILEArgument<int64_t>::result_type(){return RESULT_INT64;}
-template<>constexpr result_type_t ILEArgument<uint64_t>::result_type(){return RESULT_UINT64;}
-template<>constexpr result_type_t ILEArgument<double>::result_type(){return RESULT_FLOAT64;}
+#define DefineResultType(T, ret) \
+	template<>constexpr result_type_t ILEArgument<T>::result_type(){return ret;}
+DefineResultType(void, RESULT_VOID);
+DefineResultType(int8_t, RESULT_INT8);
+DefineResultType(uint8_t, RESULT_UINT8);
+DefineResultType(int16_t, RESULT_INT16);
+DefineResultType(uint16_t, RESULT_UINT16);
+DefineResultType(int32_t, RESULT_INT32);
+DefineResultType(uint32_t, RESULT_UINT32);
+DefineResultType(int64_t, RESULT_INT64);
+DefineResultType(uint64_t, RESULT_UINT64);
+DefineResultType(double, RESULT_FLOAT64);
+#undef DefineResultType
 
-template<>constexpr arg_type_t ILEArgument<int8_t>::type(){return ARG_INT8;}
-template<>constexpr arg_type_t ILEArgument<uint8_t>::type(){return ARG_UINT8;}
-template<>constexpr arg_type_t ILEArgument<int16_t>::type(){return ARG_INT16;}
-template<>constexpr arg_type_t ILEArgument<uint16_t>::type(){return ARG_UINT16;}
-template<>constexpr arg_type_t ILEArgument<int32_t>::type(){return ARG_INT32;}
-template<>constexpr arg_type_t ILEArgument<uint32_t>::type(){return ARG_UINT32;}
-template<>constexpr arg_type_t ILEArgument<int64_t>::type(){return ARG_INT64;}
-template<>constexpr arg_type_t ILEArgument<uint64_t>::type(){return ARG_UINT64;}
-template<>constexpr arg_type_t ILEArgument<float>::type(){return ARG_FLOAT32;}
-template<>constexpr arg_type_t ILEArgument<double>::type(){return ARG_FLOAT64;}
+#define DefineArgumentType(T, ret) \
+	template<>constexpr arg_type_t ILEArgument<T>::type(){return ret;}
+DefineArgumentType(int8_t, ARG_INT8);
+DefineArgumentType(uint8_t, ARG_UINT8);
+DefineArgumentType(int16_t, ARG_INT16);
+DefineArgumentType(uint16_t, ARG_UINT16);
+DefineArgumentType(int32_t, ARG_INT32);
+DefineArgumentType(uint32_t, ARG_UINT32);
+DefineArgumentType(int64_t, ARG_INT64);
+DefineArgumentType(uint64_t, ARG_UINT64);
+DefineArgumentType(float, ARG_FLOAT32);
+DefineArgumentType(double, ARG_FLOAT64);
 // XXX: Teraspace, space, open pointers
+#undef DefineArgumentType
 
 template<typename T>
 class ILEArgument<T*> {
