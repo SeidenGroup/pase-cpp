@@ -13,6 +13,7 @@ extern "C" {
 
 #include <array>
 #include <cstdlib>
+#include <cstring>
 #include <string>
 #include <stdexcept>
 #include <type_traits>
