@@ -68,10 +68,33 @@ increment(str, 3);
 fprintf(stderr, "Return value: '%s'\n", str); // gppbar
 ```
 
-PASE pointers are automatically lifted to ILEpointer for you.
+PASE pointer arguments are automatically lifted to ILEpointer for you.
 
-Currently, teraspace, space, and open pointers, nor aggregate returns aren't
-yet supported.
+Aggregate/pointer returns are more complicated. Because structures contain
+tags, we want to avoid copying, not just for performance, but tag integrity.
+Because C++ named value return optimizations aren't perfect, for now, this
+class only supports returning structures with an additional prepended pointer
+of where the return structure should be written to. Note that pointers are
+equivalent to the `PASE ILEpointer`, so those in your structure (and return
+type) should be that structure and not a C pointer type, unless you change
+the ILE C options for ABI to use i.e. 64-bit teraspace pointers instead.
+
+(In the future, having the aggregate case work with normal return values may
+be supported, at least with non-pointers or some kind of guaranteed NRVO with
+a fixed address.)
+
+```cpp
+// Ensure this structure is compatible with your structure in ILE C;
+// pointers will be ILEpointer (unless you change the ILE C ABI)
+struct example { /* ... */ };
+
+auto f = ILEFunction<struct example, int>("CALVIN/TESTILE", "func");
+struct example example1;
+// Not example1 = f(42);
+f(&example1, 42);
+```
+
+Currently, teraspace, space, and open pointers arguments aren't supported yet.
 
 ### `pgmfunc.hxx`
 

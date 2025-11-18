@@ -46,7 +46,18 @@ template<typename... Args>using Disjunction = std::experimental::disjunction<Arg
 template<class What, class... Args>
 struct ParameterPackContains : Disjunction<std::is_same<What, Args>...> {};
 
-// XXX: Handle aggregate case
+/*
+ * Handles returning fundamental types from an ILEarglist's result union.
+ * For aggregates and pointers, returning values is more complicated and
+ * involves setting the aggregate pointer.
+ *
+ * The proper fix for this would be changing it to use a { TReturn ret;
+ * return ret; } format (with necessary void specialization), but perfect
+ * NRVO isn't just for performance, it's to avoid destroying the tags on
+ * copying. Because this is tricky to guarantee, even for the simplest case
+ * (even the simplest impl will have different addresses in/out of a func),
+ * we just support the pointer-to case for fundamental types.
+ */
 template<typename T> T BaseReturn(ILEarglist_base *base);
 #define DefineBaseReturnSubst(T, accessor) \
 	template<> T BaseReturn<T>(ILEarglist_base *base){return base->result. accessor;}
@@ -230,12 +241,37 @@ public:
 		this->my_pid = current_pid;
 	}
 
-	TReturn operator()(TArgs... args) {
-		// Lazy initialization (and reinit), throws
-		this->init();
+	/**
+	 * Call the ILE function.
+	 *
+	 * This overload is used for fundamental (void/arith) types.
+	 */
+	template <typename TReturnInner = TReturn, typename = typename std::enable_if_t<(ILEArgument<TReturnInner>::result_type() <= 0)>>
+	TReturnInner operator()(TArgs... args) {
 		// can just be ILEArglist(args...) in C++17
 		auto arguments = ILEArglist<TArgs...>(args...);
-		int rc = _ILECALLX(&this->procedure, &arguments.base, this->signature.data(), ILEArgument<TReturn>::result_type(), this->flags);
+		this->call(&arguments.base);
+		// XXX: Tagged pointers
+		return BaseReturn<TReturnInner>(&arguments.base);
+	}
+
+	/**
+	 * Call the ILE function.
+	 *
+	 * This overload is used for structures, due to limitations of NRVO.
+	 */
+	template <typename TReturnInner = TReturn, typename = typename std::enable_if_t<(ILEArgument<TReturnInner>::result_type() > 0)>>
+	void operator()(TReturnInner *ret, TArgs... args) {
+		auto arguments = ILEArglist<TArgs...>(args...);
+		arguments.base.result.r_aggregate.s.addr = (address64_t)ret;
+		this->call(&arguments.base);
+	}
+
+private:
+	void call(ILEarglist_base *base) {
+		// Lazy initialization (and reinit), throws
+		this->init();
+		int rc = _ILECALLX(&this->procedure, base, this->signature.data(), ILEArgument<TReturn>::result_type(), this->flags);
 		// 0 is OK, -1 w/ errno 3474 is an MI exception, positive is _ILECALL error
 		// These shouldn't happen with our wrapper around it.
 		if (rc == ILECALL_INVALID_ARG) {
@@ -245,10 +281,8 @@ public:
 		} else if (rc == ILECALL_INVALID_FLAGS) {
 			throw std::invalid_argument("invalid flags");
 		}
-		// XXX: Tagged pointers, aggregates
-		return BaseReturn<TReturn>(&arguments.base);
 	}
-private:
+
 	ActivationMark activation_mark;
 	pid_t my_pid;
 	int flags;
