@@ -59,6 +59,7 @@ DefineBaseReturnSubst(int32_t, s_int32.r_int32);
 DefineBaseReturnSubst(uint32_t, s_uint32.r_uint32);
 DefineBaseReturnSubst(int64_t, r_int64);
 DefineBaseReturnSubst(uint64_t, r_uint64);
+DefineBaseReturnSubst(float, r_float64);
 DefineBaseReturnSubst(double, r_float64);
 #undef DefineBaseReturnSubst
 
@@ -101,6 +102,7 @@ DefineResultType(int32_t, RESULT_INT32);
 DefineResultType(uint32_t, RESULT_UINT32);
 DefineResultType(int64_t, RESULT_INT64);
 DefineResultType(uint64_t, RESULT_UINT64);
+DefineResultType(float, RESULT_FLOAT64);
 DefineResultType(double, RESULT_FLOAT64);
 #undef DefineResultType
 
