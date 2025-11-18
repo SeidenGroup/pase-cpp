@@ -3,4 +3,7 @@
 *.tar.gz
 examples/convpath
 examples/sysval
+examples/float
+examples/getpid
+examples/structs
 core

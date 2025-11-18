@@ -7,7 +7,7 @@ LDFLAGS :=
 
 all: examples
 
-examples: examples/convpath examples/sysval
+examples: examples/convpath examples/sysval examples/structs examples/float examples/getpid
 
 examples/sysval: examples/sysval.o
 	$(LD) $(LDFLAGS) -o $@ $^ /QOpenSys/usr/lib/libiconv.a
@@ -15,8 +15,17 @@ examples/sysval: examples/sysval.o
 examples/convpath: examples/convpath.o
 	$(LD) $(LDFLAGS) -o $@ $^ /QOpenSys/usr/lib/libiconv.a
 
+examples/structs: examples/structs.o
+	$(LD) $(LDFLAGS) -o $@ $^ /QOpenSys/usr/lib/libiconv.a
+
+examples/float: examples/float.o
+	$(LD) $(LDFLAGS) -o $@ $^ /QOpenSys/usr/lib/libiconv.a
+
+examples/getpid: examples/getpid.o
+	$(LD) $(LDFLAGS) -o $@ $^ /QOpenSys/usr/lib/libiconv.a
+
 clean:
-	rm -f *.o examples/*.o examples/convpath examples/sysval
+	rm -f *.o examples/*.o examples/convpath examples/sysval examples/structs
 
 %.o: %.cxx
 	$(CXX) $(CXXFLAGS)  -c -o $@ $^

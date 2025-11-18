@@ -18,6 +18,13 @@ their functionality.
   convert IFS `/QSYS.LIB` paths to traditional notation.
 * `examples/sysval`: Calls the `QWCRSVAL` program to get system values.
 
+Some more trivial examples to test functionality are also in the examples
+folders.
+
+* `examples/float`: Calls the ILE `pow` function and compares it to PASE `pow`.
+* `examples/getpid`: Calls the ILE `getpid` function and compares it to PASE `getpid`.
+* `examples/struct`: Tests aggregate returns. More complicated, requires manual intervention (for now) to build a ILE C service program.
+
 `make examples` will build these in `examples/`.
 
 ## Usage
