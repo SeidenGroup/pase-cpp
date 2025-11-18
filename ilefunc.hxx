@@ -46,34 +46,9 @@ template<typename... Args>using Disjunction = std::experimental::disjunction<Arg
 template<class What, class... Args>
 struct ParameterPackContains : Disjunction<std::is_same<What, Args>...> {};
 
-/*
- * Handles returning fundamental types from an ILEarglist's result union.
- * For aggregates and pointers, returning values is more complicated and
- * involves setting the aggregate pointer.
- *
- * The proper fix for this would be changing it to use a { TReturn ret;
- * return ret; } format (with necessary void specialization), but perfect
- * NRVO isn't just for performance, it's to avoid destroying the tags on
- * copying. Because this is tricky to guarantee, even for the simplest case
- * (even the simplest impl will have different addresses in/out of a func),
- * we just support the pointer-to case for fundamental types.
+/**
+ * Templated utility functions for type-specific handling in ILE FFI.
  */
-template<typename T> T BaseReturn(ILEarglist_base *base);
-#define DefineBaseReturnSubst(T, accessor) \
-	template<> T BaseReturn<T>(ILEarglist_base *base){return base->result. accessor;}
-template<> void BaseReturn<void>(ILEarglist_base*){return;}
-DefineBaseReturnSubst(int8_t, s_int8.r_int8);
-DefineBaseReturnSubst(uint8_t, s_uint8.r_uint8);
-DefineBaseReturnSubst(int16_t, s_int16.r_int16);
-DefineBaseReturnSubst(uint16_t, s_uint16.r_uint16);
-DefineBaseReturnSubst(int32_t, s_int32.r_int32);
-DefineBaseReturnSubst(uint32_t, s_uint32.r_uint32);
-DefineBaseReturnSubst(int64_t, r_int64);
-DefineBaseReturnSubst(uint64_t, r_uint64);
-DefineBaseReturnSubst(float, r_float64);
-DefineBaseReturnSubst(double, r_float64);
-#undef DefineBaseReturnSubst
-
 template<typename T>
 class ILEArgument {
 public:
@@ -91,16 +66,48 @@ public:
 		return sizeof(T);
 	}
 
+	static T base_return(ILEarglist_base*);
+
 	// This is an overload on ILEArgument instead of in ILEArglist to
 	// work around an issue with GCC pre-10 confusing T and T*.
 	// Do not provide for void, which is for returns only;
-	// this metthod will error on void. ILEFunction will block void.
+	// this method will error on void. ILEFunction will block void.
 	template <typename TInner = T, typename = typename std::enable_if_t<false == std::is_void<TInner>::value>>
 	static inline void write(char *dst, TInner src) {
 		// XXX: Should this be with tags?
                 memcpy(dst, &src, sizeof(src));
         }
 };
+
+/*
+ * Handles returning fundamental types from an ILEarglist's result union.
+ * For aggregates and pointers, returning values is more complicated and
+ * involves setting the aggregate pointer.
+ *
+ * The proper fix for this would be changing it to use a { TReturn ret;
+ * return ret; } format (with necessary void specialization), but perfect
+ * NRVO isn't just for performance, it's to avoid destroying the tags on
+ * copying. Because this is tricky to guarantee, even for the simplest case
+ * (even the simplest impl will have different addresses in/out of a func),
+ * we just support the pointer-to case for fundamental types.
+ *
+ * For now, this is defined on ILEArgument rather than ILEArglist due to
+ * limitations in partial template specialization.
+ */
+#define DefineBaseReturnSubst(T, accessor) \
+	template<> T ILEArgument<T>::base_return(ILEarglist_base *base){return base->result. accessor;}
+template<> void ILEArgument<void>::base_return(ILEarglist_base*){return;}
+DefineBaseReturnSubst(int8_t, s_int8.r_int8);
+DefineBaseReturnSubst(uint8_t, s_uint8.r_uint8);
+DefineBaseReturnSubst(int16_t, s_int16.r_int16);
+DefineBaseReturnSubst(uint16_t, s_uint16.r_uint16);
+DefineBaseReturnSubst(int32_t, s_int32.r_int32);
+DefineBaseReturnSubst(uint32_t, s_uint32.r_uint32);
+DefineBaseReturnSubst(int64_t, r_int64);
+DefineBaseReturnSubst(uint64_t, r_uint64);
+DefineBaseReturnSubst(float, r_float64);
+DefineBaseReturnSubst(double, r_float64);
+#undef DefineBaseReturnSubst
 
 #define DefineResultType(T, ret) \
 	template<>constexpr result_type_t ILEArgument<T>::result_type(){return ret;}
@@ -152,6 +159,9 @@ public:
         }
 };
 
+/**
+ * Builds an argument list compatible with _ILECALL from a parameter pack.
+ */
 template <typename... TArgs>
 class ILEArglist {
 	using Sizes = std::array<std::size_t, sizeof...(TArgs)>;
@@ -252,7 +262,7 @@ public:
 		auto arguments = ILEArglist<TArgs...>(args...);
 		this->call(&arguments.base);
 		// XXX: Tagged pointers
-		return BaseReturn<TReturnInner>(&arguments.base);
+		return ILEArgument<TReturnInner>::base_return(&arguments.base);
 	}
 
 	/**
