@@ -51,10 +51,7 @@ constexpr unsigned char const ANSI_X3_4_1968_IBM037[256] =
 
 static constexpr char a2e(char a)
 {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wchar-subscripts"
-	return ANSI_X3_4_1968_IBM037[a];
-#pragma GCC diagnostic pop
+	return ANSI_X3_4_1968_IBM037[(unsigned char)a];
 }
 
 /**
