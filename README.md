@@ -41,17 +41,28 @@ zoned numerics used for booleans:
 char yes = '1'_e; // 0xF1, EBCDIC '1'
 ```
 
-A wrapper for EBCDIC fixed-length strings is also defined.
+A wrapper for EBCDIC fixed-length strings is also defined. Specifying a longer
+length than the string will pad it with spaces, ideal for typical IBM i APIs.
+The structure implements a cast to `const char*`, so it can be used where you
+would use a normal C string.
 
 ```cpp
+EbcdicFixedString<8> QSYS0100("QSYS0100");
+// 0xD8, 0xE2, 0xE8, 0xE2, 0xF0, 0xF1, 0xF0, 0xF0
+const char *ebcdic = QSYS0100;
 
-EF<8> QSYS0100("QSYS0100");
-
-const char *ebcdic = QSYS0100.value; // 0xD8, 0xE2, 0xE8, 0xE2, 0xF0, 0xF1, 0xF0, 0xF0, 0x00
+// 0x5C, 0xE2, 0xC1, 0xD4, 0xC5, 0x40, 0x40, 0x40
+EbcdicFixedString<8> _SAME("*SAME");
 ```
 
-Note that the interface for this is a little awkward due to limitations in
-C++14; this will likely be revised when we no longer need C++14 compatibility.
+A user-defined literal for EBCDIC strings is also defined. It will use the
+`EbcdicFixedString` structure with the string's length. If you need to use
+padded strings, use `EbcdicFixedString` directly.
+
+```cpp
+// equivalent to EbcdicFixedString qsys0100("QSYS0100");
+constexpr auto qsys0100 = "QSYS0100"_e;
+```
 
 ### `ilefunc.hxx`
 
@@ -112,9 +123,8 @@ be turned into pointers.
 PGMFunction<char*, int, const char*, const char*, void*> QWCRTVTZ("QSYS", "QWCRTVTZ");
 
 char buffer[8192];
-// Not depicted: converting these into EBCDIC
-const char *format_name = "RTMZ0100";
-const char *timezone_name = "QN0500EST3";
+auto format_name = "RTMZ0100"_e;
+auto timezone_name = "QN0500EST3"_e;
 // Not depicted: Qus_EC_t from qusec.h
 Qus_EC_t error = {};
 error.Bytes_Provided = sizeof(error);

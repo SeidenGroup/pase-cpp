@@ -57,6 +57,10 @@ static constexpr char a2e(char a)
 #pragma GCC diagnostic pop
 }
 
+/**
+ * User-defined literal for EBCDIC characters. Useful for interfaces on
+ * IBM i that take a zoned integer as a boolean; i.e. 0xF1 for '1'.
+ */
 static constexpr char operator ""_e(char a)
 {
 	return a2e(a);
@@ -66,26 +70,37 @@ static constexpr char operator ""_e(char a)
  * Wrapper for a fixed-length EBCDIC string that gets converted at compile
  * time. The length is decided in the template. The string itself is padded
  * with EBCDIC spaces (0x40, ASCII '@') if it doesn't fit into the buffer.
- *
- * The annoying part is C++14 means you must access the string buffer buffer
- * via the .value member. C++17 has better constexpr support thag woud allow
- * returning a string at compile time, even via operator_"", but we still
- * want to support IBM i 7.2 w/ gcc 6.
  */
 template<size_t Len>
-struct EF {
-    constexpr EF(const char *a) : value() {
-        bool pad = false;
-        for (size_t i = 0; i < Len; i++) {
-            if (pad || a[i] == '\0') {
-                this->value[i] = ' '_e;
-                pad = true;
-            } else {
-                this->value[i] = a2e(a[i]);
-            }
-        }
-    }
-    char value[Len];
+struct EbcdicFixedString {
+	constexpr EbcdicFixedString(const char *a) : value() {
+		bool pad = false;
+		for (size_t i = 0; i < Len; i++) {
+			if (pad || a[i] == '\0') {
+				this->value[i] = ' '_e;
+				pad = true;
+			} else {
+				this->value[i] = a2e(a[i]);
+			}
+		}
+	}
+	constexpr operator const char*() const {
+		return value;
+	}
+	char value[Len];
 };
+
+/**
+ * User-defined literal for EBCDIC strings. This uses EbcdicFixedString,
+ * with the length of the string passed in.
+ *
+ * N.B.: This uses the non-standard C++ proposal N3599 which GCC implements.
+ */
+template <typename T, T...str>
+constexpr auto operator ""_e() {
+	constexpr const char arr[] = {str...};
+	constexpr EbcdicFixedString<sizeof...(str)> ef(arr);
+	return ef;
+}
 
 }

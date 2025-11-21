@@ -42,7 +42,7 @@ typedef struct QSYS0100 {
 	char asp_name[28];
 } QSYS0100;
 
-EF<8> QSYS0100_name("QSYS0100");
+constexpr auto QSYS0100_name = "QSYS0100"_e;
 
 static auto Qp0lCvtPathToQSYSObjName = ILEFunction<void, Qlg_Path_Name_T*, QSYS0100*, const char*, unsigned int, unsigned int, Qus_EC_t*>("QSYS/QP0LLIB2", "Qp0lCvtPathToQSYSObjName");
 
@@ -79,7 +79,7 @@ static void print_qsys(const char *path)
 	QSYS0100 qsys = {};
 	qsys.bytes_available = sizeof(qsys);
 
-	Qp0lCvtPathToQSYSObjName(&input_qlg.qlg, &qsys, QSYS0100_name.value, sizeof(qsys), 37, &err);
+	Qp0lCvtPathToQSYSObjName(&input_qlg.qlg, &qsys, QSYS0100_name, sizeof(qsys), 37, &err);
 	if (err.Exception_Id[0] != '\0') {
 		char exception_id[8];
 		in = (char*)err.Exception_Id;
