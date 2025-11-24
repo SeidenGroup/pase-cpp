@@ -1,7 +1,14 @@
+// vim: expandtab:ts=2:sw=2
+/*
+ * Copyright (c) 2025 Seiden Group
+ *
+ * SPDX-License-Identifier: ISC
+ */
+ 
 #include <cstdio>
 
 extern "C" {
-	#include </QOpenSys/usr/include/iconv.h>
+#include </QOpenSys/usr/include/iconv.h>
 }
 
 #include "ilefunc.hxx"
@@ -9,11 +16,11 @@ extern "C" {
 using namespace pase_cpp;
 
 struct example {
-	long long a;
-	long long b;
-	long long c;
-	long long d;
-	long long e;
+  long long a;
+  long long b;
+  long long c;
+  long long d;
+  long long e;
 };
 
 /*
@@ -33,11 +40,11 @@ struct example {
  *   crtsrvpgm srvpgm(calvin/testile) module(calvin/testile) export(*all)
  */
 
-int main(int argc, char **argv)
-{
-	auto f = pase_cpp::ILEFunction<struct example, int>("CALVIN/TESTILE", "func");
-	struct example example1;
-	f(&example1, 42); // not example1 = f(42);
-	printf("struct 1: %lld %lld %lld %lld %lld\n", example1.a, example1.b, example1.c, example1.d, example1.e);
-	return 0;
+int main(void) {
+  auto f = pase_cpp::ILEFunction<struct example, int>("CALVIN/TESTILE", "func");
+  struct example example1;
+  f(&example1, 42); // not example1 = f(42);
+  printf("struct 1: %lld %lld %lld %lld %lld\n", example1.a, example1.b,
+         example1.c, example1.d, example1.e);
+  return 0;
 }
