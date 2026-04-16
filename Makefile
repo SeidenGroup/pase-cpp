@@ -5,7 +5,10 @@ LDFLAGS :=
 
 .PHONY: all clean examples
 
-all: examples
+all: examples pcml
+
+pcml: pcml.o
+	$(LD) $(LDFLAGS) -o $@ $^ /QOpenSys/usr/lib/libiconv.a
 
 examples: examples/convpath examples/sysval examples/structs examples/float examples/getpid
 
@@ -25,7 +28,7 @@ examples/getpid: examples/getpid.o
 	$(LD) $(LDFLAGS) -o $@ $^ /QOpenSys/usr/lib/libiconv.a
 
 clean:
-	rm -f *.o examples/*.o examples/convpath examples/sysval examples/structs
+	rm -f *.o examples/*.o examples/convpath examples/sysval examples/structs pcml
 
 %.o: %.cxx
 	$(CXX) $(CXXFLAGS)  -c -o $@ $^
