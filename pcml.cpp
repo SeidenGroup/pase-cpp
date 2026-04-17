@@ -98,7 +98,89 @@ static auto QBNRPII =
 
 iconv_t to_37, from_37;
 
-void get_pcml(const char *path)
+void get_pcml(const char *path, const char *lib_name, const char *obj_name, const char *obj_type)
+{
+  Qus_EC_t err = {};
+  char *in = nullptr, *out = nullptr;
+  size_t inleft = 0, outleft = 0;
+
+  char libobj[20];
+  memcpy(libobj, obj_name, 10);
+  memcpy(libobj + 10, lib_name, 10);
+  // Ensure filename is space and not null padded
+  for (int i = 0; i < 20; i++) {
+    if (libobj[i] == '\0') {
+      libobj[i] = ' '_e;
+    }
+  }
+  // Same for the type...
+  char type[10];
+  memcpy(type, obj_type, 10);
+  for (int i = 0; i < 10; i++) {
+    if (type[i] == '\0') {
+      type[i] = ' '_e;
+    }
+  }
+
+  char buf[90000];
+  Qbn_PGII0100_t *ptr = (Qbn_PGII0100_t*)buf;
+  ptr->Bytes_Available = sizeof(buf);
+  err = {};
+  err.Bytes_Provided = sizeof(err);
+  QBNRPII(buf, sizeof(buf), RPII0100_name, libobj, type, ALLBNDMOD, &err);
+  if (err.Exception_Id[0] != '\0') {
+    char exception_id[8];
+    in = (char *)err.Exception_Id;
+    inleft = 7;
+    out = exception_id;
+    outleft = 8;
+    iconv(from_37, &in, &inleft, &out, &outleft);
+    exception_id[7] = '\0';
+    fprintf(stderr, "Failed to get program info for %s: %s\n", path, exception_id);
+    return;
+  }
+
+  if (ptr->Number_Entries == 0) {
+    return;
+  }
+  Qbn_Interface_Entry *entry = (Qbn_Interface_Entry*)(buf + ptr->Offset_First_Entry);
+  do {
+    if (entry->Interface_Info_Type != 1) {
+      continue; /* not PCML */
+    }
+    {
+      char mod_name[11], mod_lib[11];
+      in = entry->Module_Name;
+      inleft = 10;
+      out = mod_name;
+      outleft = 11;
+      iconv(from_37, &in, &inleft, &out, &outleft);
+      *out = '\0';
+      mod_name[10] = '\0';
+      in = entry->Module_Library;
+      inleft = 10;
+      out = mod_lib;
+      outleft = 11;
+      iconv(from_37, &in, &inleft, &out, &outleft);
+      *out = '\0';
+      printf("<!-- module: %s/%s -->\n", mod_name, mod_lib);
+    }
+    {
+      outleft = entry->Interface_Info_Length_Ret * 6;
+      char *pcml = (char*)malloc(outleft);
+      out = pcml;
+      in = (char*)(buf + entry->Offset_Interface_Info);
+      inleft = entry->Interface_Info_Length_Ret;
+      // XXX: Don't assume 37
+      iconv(from_37, &in, &inleft, &out, &outleft);
+      *out = '\0';
+      printf("%s\n", pcml);
+      free(pcml);
+    }
+  } while (entry->Offset_Next_Entry && (entry = (Qbn_Interface_Entry*)(buf + entry->Offset_Next_Entry)));
+}
+
+void convert_path(const char *path)
 {
   Qus_EC_t err = {};
   err.Bytes_Provided = sizeof(err);
@@ -133,45 +215,7 @@ void get_pcml(const char *path)
     return;
   }
 
-  /****/
-
-  char libobj[20];
-  memcpy(libobj, qsys.obj_name, 10);
-  memcpy(libobj + 10, qsys.lib_name, 10);
-  // Ensure filename is space and not null padded
-  for (int i = 0; i < 20; i++) {
-    if (libobj[i] == '\0') {
-      libobj[i] = ' '_e;
-    }
-  }
-  // Same for the type...
-  char type[10];
-  memcpy(type, qsys.obj_type, 10);
-  for (int i = 0; i < 10; i++) {
-    if (type[i] == '\0') {
-      type[i] = ' '_e;
-    }
-  }
-
-  char buf[10000];
-  Qbn_PGII0100_t *ptr = (Qbn_PGII0100_t*)buf;
-  ptr->Bytes_Available = sizeof(buf);
-  err = {};
-  err.Bytes_Provided = sizeof(err);
-  QBNRPII(buf, sizeof(buf), RPII0100_name, libobj, type, ALLBNDMOD, &err);
-  if (err.Exception_Id[0] != '\0') {
-    char exception_id[8];
-    in = (char *)err.Exception_Id;
-    inleft = 7;
-    out = exception_id;
-    outleft = 8;
-    iconv(from_37, &in, &inleft, &out, &outleft);
-    exception_id[7] = '\0';
-    fprintf(stderr, "Failed to get program info: %s\n", exception_id);
-    return;
-  }
-
-  fprintf(stderr, "%s: %d bytes returned, %d entries\n", path, ptr->Bytes_Returned, ptr->Number_Entries);
+  get_pcml(path, qsys.lib_name, qsys.obj_name, qsys.obj_type);
 }
 
 int main(int argc, char **argv)
@@ -180,7 +224,7 @@ int main(int argc, char **argv)
   from_37 = iconv_open(ccsidtocs(Qp2paseCCSID()), ccsidtocs(37));
 
   for (int i = 1; i < argc; i++) {
-    get_pcml(argv[i]);
+    convert_path(argv[i]);
   }
 
   return 0;
