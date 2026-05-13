@@ -236,13 +236,13 @@ public:
 
   void init() {
 #ifdef PASE_CPP_NO_FORK
-    // Forking will destroy the activation mark
-    pid_t current_pid = getpid();
-    if (this->my_pid == current_pid) {
+    if (this->active) {
       return;
     }
 #else
-    if (this->active) {
+    // Forking will destroy the activation mark
+    pid_t current_pid = getpid();
+    if (this->my_pid == current_pid) {
       return;
     }
 #endif
