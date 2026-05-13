@@ -114,6 +114,14 @@ f(&example1, 42);
 
 Currently, teraspace, space, and open pointers arguments aren't supported yet.
 
+#### Build options
+
+* `PASE_CPP_NO_FORK`: ILEFunction checks the process ID on each function call,
+  as a forked process with have an invalid activation mark in the child. For
+  applications that don't fork, you can use `-DPASE_CPP_NO_FORK` when building
+  to engage a simpler check that doesn't check the current process. This can
+  speed up frequent calls to the function.
+
 ### `pgmfunc.hxx`
 
 An OPM program passes by reference; value types for input will be automatically

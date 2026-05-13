@@ -220,7 +220,11 @@ template <typename TReturn, typename... TArgs> class ILEFunction {
 
 public:
   ILEFunction(const char *path, const char *symbol, int flags = 0) {
+#ifdef PASE_CPP_NO_FORK
+    this->active = false;
+#else
     this->my_pid = -1;
+#endif
     this->activation_mark = -1;
     this->procedure = {};
     // Invalid flags will result in... ILECALL_INVALID_FLAGS
@@ -231,11 +235,17 @@ public:
   }
 
   void init() {
+#ifdef PASE_CPP_NO_FORK
     // Forking will destroy the activation mark
     pid_t current_pid = getpid();
     if (this->my_pid == current_pid) {
       return;
     }
+#else
+    if (this->active) {
+      return;
+    }
+#endif
     this->activation_mark = _ILELOADX(this->path.c_str(), ILELOAD_LIBOBJ);
     if (this->activation_mark == (ActivationMark)-1) {
       throw std::invalid_argument("invalid service program");
@@ -244,7 +254,11 @@ public:
                  this->symbol.c_str()) != ILESYM_PROCEDURE) {
       throw std::invalid_argument("invalid symbol");
     }
+#ifdef PASE_CPP_NO_FORK
+    this->active = true;
+#else
     this->my_pid = current_pid;
+#endif
   }
 
   /**
@@ -295,7 +309,11 @@ private:
   }
 
   ActivationMark activation_mark;
+#ifdef PASE_CPP_NO_FORK
+  bool active;
+#else
   pid_t my_pid;
+#endif
   int flags;
   ILEpointer procedure __attribute__((aligned(16)));
   std::string path, symbol;
